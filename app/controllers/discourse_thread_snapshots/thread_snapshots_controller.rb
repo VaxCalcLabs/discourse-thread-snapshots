@@ -30,13 +30,29 @@ module DiscourseThreadSnapshots
     end
 
     def index
-      snapshots = ThreadSnapshot.order(created_at: :desc).limit(100)
+      scope = ThreadSnapshot.active.order(created_at: :desc)
+
+      if params[:topic_id].present?
+        topic = Topic.find_by(id: params[:topic_id])
+        raise Discourse::NotFound if topic.nil? || !guardian.can_see?(topic)
+
+        scope = scope.where(topic_id: topic.id)
+      end
+
+      snapshots =
+        scope
+          .includes(:topic)
+          .limit(100)
+          .select { |snapshot| snapshot.topic && guardian.can_see?(snapshot.topic) }
+
       render json: { thread_snapshots: snapshots.map(&:as_staff_json) }
     end
 
     def destroy
-      snapshot = ThreadSnapshot.find_by(id: params[:id])
-      raise Discourse::NotFound if snapshot.nil?
+      snapshot = ThreadSnapshot.includes(:topic).find_by(id: params[:id])
+      if snapshot.nil? || snapshot.topic.nil? || !guardian.can_see?(snapshot.topic)
+        raise Discourse::NotFound
+      end
 
       snapshot.destroy!
       render json: success_json

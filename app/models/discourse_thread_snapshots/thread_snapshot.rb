@@ -4,8 +4,9 @@ module DiscourseThreadSnapshots
   class ThreadSnapshot < ActiveRecord::Base
     self.table_name = "thread_snapshots"
 
-    # 32 bytes, hex-encoded. The public route accepts this length only.
-    TOKEN_BYTES = 32
+    # New tokens are 16 bytes, hex-encoded (32 characters). The public route
+    # also accepts tokens created earlier, which are 64 characters.
+    TOKEN_BYTES = 16
 
     belongs_to :topic
     belongs_to :user
@@ -16,6 +17,7 @@ module DiscourseThreadSnapshots
     before_validation :assign_token, on: :create
 
     scope :expired, -> { where("expires_at <= ?", Time.zone.now) }
+    scope :active, -> { where("expires_at > ?", Time.zone.now) }
 
     def self.capture!(topic:, user:)
       create!(

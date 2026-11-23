@@ -1,0 +1,24 @@
+.thread-snapshot-share {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75em;
+}
+
+.thread-snapshot-share__url,
+.thread-snapshot-share__earlier-url {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.thread-snapshot-share__earlier-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  margin: 0 0 0.75em;
+  list-style: none;
+}
+
+.thread-snapshot-share__earlier {
+  margin: 0;
+  padding: 0;
+}
