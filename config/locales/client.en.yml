@@ -1,0 +1,8 @@
+en:
+  js:
+    thread_snapshots:
+      share_snapshot: "Share snapshot"
+      created_title: "Snapshot link"
+      created_body: "Anyone with this link can view the frozen thread until %{date}: %{url}"
+      revoke: "Revoke snapshot"
+      revoked: "This snapshot has been revoked."
