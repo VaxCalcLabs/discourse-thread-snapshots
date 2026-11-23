@@ -98,6 +98,70 @@ RSpec.describe DiscourseThreadSnapshots::ThreadSnapshotsController do
       expect(response.status).to eq(200)
       expect(response.body).to include("FROZEN_SENTINEL_TEXT")
     end
+
+    it "shows the page heading above the title when it is set" do
+      SiteSetting.thread_snapshots_page_heading = "Shared <copy>"
+      snapshot = create_snapshot
+
+      get "/thread-snapshots/#{snapshot.token}"
+
+      expect(response.status).to eq(200)
+      body = response.body
+      expect(body).to include('class="page-heading"')
+      expect(body).to include("Shared &lt;copy&gt;")
+      expect(body).not_to include("<copy>")
+      expect(body.index('class="page-heading"')).to be < body.index("<h1>")
+    end
+
+    it "omits the page heading when it is blank" do
+      SiteSetting.thread_snapshots_page_heading = "   "
+      snapshot = create_snapshot
+
+      get "/thread-snapshots/#{snapshot.token}"
+
+      expect(response.status).to eq(200)
+      expect(response.body).to include("Original snapshot title")
+      expect(response.body).not_to include('class="page-heading"')
+    end
+
+    it "renders a sanitized footer under a divider" do
+      SiteSetting.thread_snapshots_footer_html = <<~HTML
+        <p>Footer <strong>note</strong> <em>here</em><br><small>fine</small></p>
+        <script>alert(1)</script>
+        <a href="javascript:alert(1)" onclick="alert(1)">bad</a>
+        <a href="https://example.com/about">About</a>
+      HTML
+      snapshot = create_snapshot
+
+      get "/thread-snapshots/#{snapshot.token}"
+
+      expect(response.status).to eq(200)
+      body = response.body
+      expect(body).to include("<hr>")
+      expect(body).to include('class="page-footer"')
+      expect(body).to include("<strong>note</strong>")
+      expect(body).to include("<em>here</em>")
+      expect(body).to include("<small>fine</small>")
+      expect(body).to match(%r{<br\s*/?>})
+      expect(body).to include('href="https://example.com/about"')
+      expect(body).not_to include("<script")
+      expect(body).not_to include("alert(1)")
+      expect(body).not_to include("javascript:")
+      expect(body).not_to include("onclick")
+      expect(body.index("<hr>")).to be > body.index("FROZEN_SENTINEL_TEXT")
+      expect(body.index("<hr>")).to be < body.index('class="page-footer"')
+    end
+
+    it "omits the footer when it is blank" do
+      SiteSetting.thread_snapshots_footer_html = ""
+      snapshot = create_snapshot
+
+      get "/thread-snapshots/#{snapshot.token}"
+
+      expect(response.status).to eq(200)
+      expect(response.body).not_to include('class="page-footer"')
+      expect(response.body).not_to include("<hr>")
+    end
   end
 
   describe "#create" do

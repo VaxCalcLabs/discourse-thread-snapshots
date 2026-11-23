@@ -22,6 +22,25 @@
         font-size: 1.5rem;
         line-height: 1.3;
       }
+      .page-heading {
+        margin: 0 0 0.35rem;
+        color: #666;
+        font-size: 0.95rem;
+      }
+      hr {
+        margin: 2rem 0 0;
+        border: 0;
+        border-top: 1px solid #ddd;
+      }
+      .page-footer {
+        margin-top: 1.25rem;
+        color: #555;
+        font-size: 0.85rem;
+        text-align: left;
+      }
+      .page-footer p {
+        margin: 0.35rem 0;
+      }
       article {
         display: flex;
         gap: 0.75rem;
@@ -58,6 +77,9 @@
   </head>
   <body>
     <main>
+      <% if @page_heading.present? %>
+        <p class="page-heading"><%= @page_heading %></p>
+      <% end %>
       <h1><%= @snapshot.title %></h1>
       <% @snapshot.frozen_posts.each do |post| %>
         <% name = post["name"].to_s.strip %>
@@ -80,6 +102,10 @@
             <div class="cooked"><%= post["cooked"].to_s.html_safe %></div>
           </div>
         </article>
+      <% end %>
+      <% if @footer_html.present? %>
+        <hr>
+        <footer class="page-footer"><%= @footer_html.html_safe %></footer>
       <% end %>
     </main>
   </body>

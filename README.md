@@ -20,12 +20,14 @@ Restart the application so the plugin and its routes load. In a container instal
 
 ## Settings
 
-Both settings are under Plugins.
+These settings are under Plugins.
 
 | Setting | Default | Purpose |
 | --- | --- | --- |
 | `thread_snapshots_enabled` | on | Turns the plugin on or off. |
 | `thread_snapshots_expiry_days` | 7 | How many days a new snapshot remains available. |
+| `thread_snapshots_page_heading` | empty | Optional heading shown above the thread title on the public page. |
+| `thread_snapshots_footer_html` | empty | Optional HTML at the bottom of the public page, under a divider. Allowed tags are `p`, `small`, `a` (href), `strong`, `em`, and `br`. |
 
 The expiry time is stored on the snapshot when it is created. Changing the setting does not extend snapshots that already exist.
 
