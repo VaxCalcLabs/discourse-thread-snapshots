@@ -2,6 +2,8 @@ en:
   site_settings:
     thread_snapshots_enabled: "Allow staff to publish a frozen public copy of a personal message thread."
     thread_snapshots_expiry_days: "Days before a new thread snapshot expires."
+    thread_snapshots_page_heading: "Optional heading shown above the title on the public snapshot page."
+    thread_snapshots_footer_html: "Optional HTML shown at the bottom of the public snapshot page. Only simple text formatting and links are kept."
   thread_snapshots:
     not_personal_message: "A snapshot can only be created for a personal message."
     not_found: "Not Found"

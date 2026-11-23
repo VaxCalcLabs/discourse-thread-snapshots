@@ -68,6 +68,9 @@ module DiscourseThreadSnapshots
       end
 
       @snapshot = snapshot
+      @page_heading = SiteSetting.thread_snapshots_page_heading.to_s.strip
+      @footer_html =
+        DiscourseThreadSnapshots::FooterHtml.sanitize(SiteSetting.thread_snapshots_footer_html)
       render :show, layout: false
     end
   end

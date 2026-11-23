@@ -2,7 +2,7 @@
 
 # name: discourse-thread-snapshots
 # about: Share a frozen copy of a personal message thread at an unguessable public link.
-# version: 0.1.1
+# version: 0.1.2
 # authors: Contributors
 # required_version: 3.3.0
 
@@ -16,6 +16,7 @@ module ::DiscourseThreadSnapshots
 end
 
 require_relative "lib/discourse_thread_snapshots/engine"
+require_relative "lib/discourse_thread_snapshots/footer_html"
 
 after_initialize do
   require_relative "jobs/scheduled/delete_expired_thread_snapshots"
