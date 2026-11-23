@@ -76,10 +76,27 @@ RSpec.describe DiscourseThreadSnapshots::ThreadSnapshotsController do
       expect(response.status).to eq(404)
     end
 
-    it "returns 404 for an unknown token" do
+    it "returns 404 for an unknown 32 character token" do
+      get "/thread-snapshots/#{SecureRandom.hex(16)}"
+
+      expect(response.status).to eq(404)
+    end
+
+    it "returns 404 for an unknown 64 character token" do
       get "/thread-snapshots/#{SecureRandom.hex(32)}"
 
       expect(response.status).to eq(404)
+    end
+
+    it "still serves a snapshot stored with a 64 character token" do
+      snapshot = create_snapshot
+      legacy = SecureRandom.hex(32)
+      snapshot.update!(token: legacy)
+
+      get "/thread-snapshots/#{legacy}"
+
+      expect(response.status).to eq(200)
+      expect(response.body).to include("FROZEN_SENTINEL_TEXT")
     end
   end
 
@@ -91,7 +108,7 @@ RSpec.describe DiscourseThreadSnapshots::ThreadSnapshotsController do
 
       expect(response.status).to eq(200)
       body = response.parsed_body
-      expect(body["token"]).to match(/\A[a-f0-9]{64}\z/)
+      expect(body["token"]).to match(/\A[a-f0-9]{32}\z/)
       expect(body["url"]).to end_with("/thread-snapshots/#{body["token"]}")
       expect(body["title"]).to eq("Original snapshot title")
 
@@ -155,6 +172,16 @@ RSpec.describe DiscourseThreadSnapshots::ThreadSnapshotsController do
       expect(response.status).to eq(403)
       expect(DiscourseThreadSnapshots::ThreadSnapshot.exists?(snapshot.id)).to eq(true)
     end
+
+    it "does not let a staff user revoke a snapshot for a personal message they cannot see" do
+      snapshot = create_snapshot
+      sign_in(Fabricate(:moderator))
+
+      delete "/thread-snapshots/#{snapshot.id}.json"
+
+      expect(response.status).to eq(404)
+      expect(DiscourseThreadSnapshots::ThreadSnapshot.exists?(snapshot.id)).to eq(true)
+    end
   end
 
   describe "#index" do
@@ -167,6 +194,65 @@ RSpec.describe DiscourseThreadSnapshots::ThreadSnapshotsController do
       expect(response.status).to eq(200)
       ids = response.parsed_body["thread_snapshots"].map { |row| row["id"] }
       expect(ids).to include(snapshot.id)
+    end
+
+    it "omits expired snapshots" do
+      snapshot = create_snapshot
+      snapshot.update!(expires_at: 1.hour.ago)
+      sign_in(staff)
+
+      get "/thread-snapshots.json"
+
+      expect(response.status).to eq(200)
+      ids = response.parsed_body["thread_snapshots"].map { |row| row["id"] }
+      expect(ids).not_to include(snapshot.id)
+    end
+
+    it "lists unexpired snapshots for one topic" do
+      snapshot = create_snapshot
+      other_topic = Fabricate(:private_message_topic, user: staff, recipient: member)
+      other = DiscourseThreadSnapshots::ThreadSnapshot.capture!(topic: other_topic, user: staff)
+      expired = create_snapshot
+      expired.update!(expires_at: 1.hour.ago)
+      sign_in(staff)
+
+      get "/thread-snapshots.json", params: { topic_id: topic.id }
+
+      expect(response.status).to eq(200)
+      ids = response.parsed_body["thread_snapshots"].map { |row| row["id"] }
+      expect(ids).to eq([snapshot.id])
+      expect(ids).not_to include(other.id, expired.id)
+      expect(response.parsed_body["thread_snapshots"].first["url"]).to include(snapshot.token)
+    end
+
+    it "returns 404 when the topic does not exist" do
+      sign_in(staff)
+
+      get "/thread-snapshots.json", params: { topic_id: -1 }
+
+      expect(response.status).to eq(404)
+    end
+
+    it "does not list snapshots for a personal message the staff user cannot see" do
+      snapshot = create_snapshot
+      sign_in(Fabricate(:moderator))
+
+      get "/thread-snapshots.json", params: { topic_id: topic.id }
+
+      expect(response.status).to eq(404)
+      expect(response.body).not_to include(snapshot.token)
+    end
+
+    it "does not include snapshots from personal messages the staff user cannot see" do
+      snapshot = create_snapshot
+      sign_in(Fabricate(:moderator))
+
+      get "/thread-snapshots.json"
+
+      expect(response.status).to eq(200)
+      ids = response.parsed_body["thread_snapshots"].map { |row| row["id"] }
+      expect(ids).not_to include(snapshot.id)
+      expect(response.body).not_to include(snapshot.token)
     end
   end
 end

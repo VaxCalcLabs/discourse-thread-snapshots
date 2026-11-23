@@ -6,6 +6,6 @@ DiscourseThreadSnapshots::Engine.routes.draw do
   delete "/thread-snapshots/:id" => "thread_snapshots#destroy", :constraints => { id: /\d+/ }
   get "/thread-snapshots/:token" => "thread_snapshots#show",
       :constraints => {
-        token: /[a-f0-9]{64}/,
+        token: /[a-f0-9]{32}([a-f0-9]{32})?/,
       }
 end

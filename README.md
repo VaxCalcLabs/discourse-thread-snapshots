@@ -33,17 +33,18 @@ The expiry time is stored on the snapshot when it is created. Changing the setti
 
 1. Open a personal message while signed in as a staff user who can see that message. Moderators need to be part of the conversation. Admins can open any personal message unless the forum is configured to hide secured content from admins.
 2. Open the topic wrench menu and choose **Share snapshot**.
-3. Copy the link. It looks like `/thread-snapshots/<token>`.
+3. A window opens with the full link in a text field, the expiry in your local time, and buttons to copy the link, revoke it, or close the window. Earlier links for this message that have not expired are listed in the same window.
 4. Anyone with the link can read that frozen copy, including visitors who are not logged in, even when the forum requires login everywhere else.
-5. Revoke it from the dialog that shows the link. Staff can also list and delete snapshots over HTTP:
+5. Staff can also list and delete snapshots over HTTP:
 
 ```
 GET    /thread-snapshots.json
+GET    /thread-snapshots.json?topic_id=123
 POST   /thread-snapshots.json          { "topic_id": 123 }
 DELETE /thread-snapshots/:id.json
 ```
 
-`POST` and `DELETE` require a staff user who can see the personal message. `GET /thread-snapshots/<token>` is the public page. Unknown tokens and expired tokens respond with 404.
+`POST`, `GET` (the JSON list), and `DELETE` require a staff user. The list only includes unexpired snapshots for personal messages that the staff user can see. `topic_id` limits the list to one topic; a missing topic, or a topic the user cannot see, responds with 404. `GET /thread-snapshots/<token>` is the public page. New tokens are 32 hex characters. Tokens created earlier are 64 hex characters and still open. Unknown tokens and expired tokens respond with 404.
 
 A daily job deletes expired rows. The public page checks the expiry time itself, so a snapshot stops working as soon as it expires, even if the job has not run yet.
 
@@ -59,7 +60,7 @@ bin/rspec plugins/discourse-thread-snapshots/spec
 
 ## Compatibility
 
-Built against the plugin APIs in current core: an isolated engine, `addTopicAdminMenuButton`, and skipping the login redirect on the public action. `required_version` is 3.3.0, which is when the topic admin menu button API was added. The share dialog passes already translated text to the dialog service used by current core.
+Built against the plugin APIs in current core: an isolated engine, `addTopicAdminMenuButton`, the modal service, and skipping the login redirect on the public action. The share window is a Glimmer modal imported from `discourse/components/d-modal`, which current core resolves to the UI kit modal. `required_version` is 3.3.0, which is when the topic admin menu button API was added.
 
 ## License
 

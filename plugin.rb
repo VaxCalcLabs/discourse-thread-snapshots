@@ -2,13 +2,14 @@
 
 # name: discourse-thread-snapshots
 # about: Share a frozen copy of a personal message thread at an unguessable public link.
-# version: 0.1.0
+# version: 0.1.1
 # authors: Contributors
 # required_version: 3.3.0
 
 enabled_site_setting :thread_snapshots_enabled
 
 register_svg_icon "link"
+register_asset "stylesheets/thread-snapshots.scss"
 
 module ::DiscourseThreadSnapshots
   PLUGIN_NAME = "discourse-thread-snapshots"
